@@ -35,6 +35,9 @@ class AsistenteKardex(models.TransientModel):
         return self.env.ref('kardex.action_reporte_kardex').report_action(self, data=data)
 
     def reporte_excel(self):
+        self.ensure_one()
+        reporte = self.env['report.kardex.reporte_kardex']
+        report_tz = reporte._get_report_timezone(self.ubicacion_id)
         f = io.BytesIO()
         libro = xlsxwriter.Workbook(f)
         hoja = libro.add_worksheet('reporte')
@@ -49,14 +52,14 @@ class AsistenteKardex(models.TransientModel):
         
         y = 2
         for producto in self.producto_ids:
-            resultado = self.env['report.kardex.reporte_kardex'].lineas(datos, producto.id)
+            resultado = reporte.lineas(datos, producto.id)
             hoja.write(y, 0, 'Fecha desde:')
             hoja.write(y, 1, 'Fecha hasta:')
             hoja.write(y, 2, 'Ubicación:')
             hoja.write(y, 3, 'Producto:')
             y += 1
-            hoja.write(y, 0, self.fecha_desde.strftime('%d/%m/%Y %H:%M:%S'))
-            hoja.write(y, 1, self.fecha_hasta.strftime('%d/%m/%Y %H:%M:%S'))
+            hoja.write(y, 0, reporte._format_datetime(self.fecha_desde, report_tz))
+            hoja.write(y, 1, reporte._format_datetime(self.fecha_hasta, report_tz))
             hoja.write(y, 2, self.ubicacion_id.display_name)
             hoja.write(y, 3, producto.name)
             y += 1
@@ -82,7 +85,7 @@ class AsistenteKardex(models.TransientModel):
             hoja.write(y, 9, 'Total')
             y += 1
             for linea in resultado['lineas']:
-                hoja.write(y, 0, linea['fecha'].strftime('%d/%m/%Y %H:%M:%S'))
+                hoja.write(y, 0, reporte._format_datetime(linea['fecha'], report_tz))
                 hoja.write(y, 1, linea['documento'])
                 hoja.write(y, 2, linea['empresa'])
                 hoja.write(y, 3, linea['tipo'])

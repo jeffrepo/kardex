@@ -1,11 +1,24 @@
 # -*- coding: utf-8 -*-
 
-from odoo import api, models
+from odoo import api, fields, models
 import datetime
 import logging
 
 class ReporteKardex(models.AbstractModel):
     _name = 'report.kardex.reporte_kardex'
+
+    def _get_report_timezone(self, ubicacion):
+        company = ubicacion.company_id or self.env.company
+        return (company.partner_id.tz or self.env.context.get('tz')
+                or self.env.user.tz or 'UTC')
+
+    def _format_datetime(self, value, tz):
+        if not value:
+            return ''
+        # Odoo stores naive UTC datetimes. Convert only when displaying them.
+        local_datetime = fields.Datetime.context_timestamp(
+            self.with_context(tz=tz), fields.Datetime.to_datetime(value))
+        return local_datetime.strftime('%d/%m/%Y %H:%M:%S')
 
     def inicial(self, datos):
         self.env.cr.execute("select sum(qty_in) as entrada, sum(qty_out) as salida, product_id \
@@ -94,6 +107,7 @@ class ReporteKardex(models.AbstractModel):
     def _get_report_values(self, docids, data=None):
         model = self.env.context.get('active_model')
         docs = self.env[model].browse(self.env.context.get('active_ids', []))
+        ubicacion = self.env['stock.location'].browse(data['form']['ubicacion_id'][0])
 
         return  {
             'doc_ids': self.ids,
@@ -101,6 +115,8 @@ class ReporteKardex(models.AbstractModel):
             'data': data['form'],
             'docs': docs,
             'lineas': self.lineas,
+            'format_datetime': self._format_datetime,
+            'report_tz': self._get_report_timezone(ubicacion),
             'mostrar_costo': self.user_has_groups('stock.group_stock_manager,sales_team.group_sale_manager,account.group_account_user'),
         }
 

@@ -13,11 +13,11 @@
                             <div class="row mt32">
                                 <div class="col-auto mw-100 mb-2">
                                     <strong>Fecha desde:</strong><br/>
-                                    <span t-esc="data['fecha_desde']" t-options="{'widget': 'datetime'}"/>
+                                    <span t-esc="format_datetime(data['fecha_desde'], report_tz)"/>
                                 </div>
                                 <div class="col-auto mw-100 mb-2">
                                     <strong>Fecha hasta:</strong><br/>
-                                    <span t-esc="data['fecha_hasta']" t-options="{'widget': 'datetime'}"/>
+                                    <span t-esc="format_datetime(data['fecha_hasta'], report_tz)"/>
                                 </div>
                                 <div class="col-auto mw-100 mb-2">
                                     <strong>Ubicación:</strong><br/>
@@ -67,7 +67,7 @@
                                 <tbody>
                                     <tr t-foreach="result['lineas']" t-as="l">
                                         <td>
-                                            <span t-esc="l['fecha']" t-options="{'widget': 'datetime'}"/>
+                                            <span t-esc="format_datetime(l['fecha'], report_tz)"/>
                                         </td>
                                         <td>
                                             <span t-esc="l['documento']"/>
